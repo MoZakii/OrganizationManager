@@ -2,12 +2,18 @@ package main
 
 import (
 	"MoZaki-Organization-Manager/pkg/api/routes"
+	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal(err)
+	}
 	port := os.Getenv("PORT")
 
 	if port == "" {
@@ -16,9 +22,8 @@ func main() {
 
 	router := gin.Default()
 
-	routes.AuthRoutes(router)
-	routes.UserRoutes(router)
 	routes.OrganizationRoutes(router)
+	routes.AuthRoutes(router)
 
 	router.GET("/api-1", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})

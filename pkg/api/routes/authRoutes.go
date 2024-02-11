@@ -9,10 +9,9 @@ import (
 func AuthRoutes(incomingRoutes *gin.Engine) {
 	auth := incomingRoutes.Group("/")
 	{
-		auth.POST("signup", handlers.Signup)
-		auth.POST("login", handlers.Login)
-		auth.POST("refresh-token", handlers.RefreshToken)
-		auth.POST("revoke-refresh-token", handlers.RevokeRefreshToken)
+		auth.POST("signup", handlers.Signup())
+		auth.POST("signin", handlers.Login())
+		auth.POST("refresh-token", handlers.RefreshToken())
 	}
 
 }
