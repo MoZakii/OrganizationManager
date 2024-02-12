@@ -3,29 +3,21 @@ package controllers
 import (
 	"MoZaki-Organization-Manager/pkg/database/mongodb/models"
 	"MoZaki-Organization-Manager/pkg/database/mongodb/repository"
-	"context"
 	"errors"
 	"log"
-	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var organizationCollection *mongo.Collection = repository.OpenCollection(repository.Client, "organization")
+var Validate = validator.New()
 
 func MatchAccessLevelOfUser(c *gin.Context, organizationID string) (organization *models.Organization, err error) {
-	//Find organization in database  DONE
+	//Find organization in database
 
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	err = organizationCollection.FindOne(ctx, bson.M{"organization_id": organizationID}).Decode(&organization)
+	organization, err = repository.GetOrganizationByID(organizationID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -34,156 +26,135 @@ func MatchAccessLevelOfUser(c *gin.Context, organizationID string) (organization
 	userEmail, exists := c.Get("user_email")
 	if !exists {
 		err = errors.New("email not found")
-		return nil, err
+		return
 	}
 
 	// Compare user to organization author
 
 	if userEmail != organization.Author_Email {
 		err = errors.New("unauthorized access to this recource")
-		return nil, err
+		return
 	}
 
 	return organization, nil
 }
 
-func ContainsUser(c *gin.Context, organizationID string, userEmail string) (organization *models.Organization, err error) {
+func ContainsUser(c *gin.Context, organizationID string, userEmail string) (organization *models.Organization, found bool, err error) {
 
-	//Find organization in database  DONE
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
+	found = false
+	//Find organization in database
 
-	err = organizationCollection.FindOne(ctx, bson.M{"organization_id": organizationID}).Decode(&organization)
+	organization, err = repository.GetOrganizationByID(organizationID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
 	//Compare user email to organization members.
 
-	var found bool = false
 	for _, item := range organization.Organization_Members {
 		if *item.Email == userEmail {
 			found = true
 			break
 		}
 	}
+	return organization, found, err
+}
 
+func CreateOrganization(c *gin.Context, organization *models.Organization) (err error) {
+
+	temp, exists := c.Get("user_email")
+	if !exists {
+		err = errors.New("email doesnt exist")
+		return
+	}
+	organization.Author_Email = temp.(string)
+	err = Validate.Struct(organization)
+	if err != nil {
+		return
+	}
+	organization.Organization_Members = make([]models.Organization_Member, 0)
+	organization.ID = primitive.NewObjectID()
+	organization.Organization_ID = organization.ID.Hex()
+	err = repository.CreateOrganization(*organization)
+	return
+}
+
+func GetOrganization(c *gin.Context) (organization *models.Organization, err error) {
+	organizationID := c.Param("organization_id")
+	organization, err = repository.GetOrganization(organizationID)
+
+	return
+
+}
+
+func GetAllOrganizations(c *gin.Context) (organizations []repository.NeededInfo, err error) {
+
+	organizations, err = repository.GetAllOrganizations()
+
+	return
+
+}
+
+func UpdateOrganization(c *gin.Context) (organization *models.Organization, err error) {
+
+	organizationID := c.Param("organization_id")
+	_, err = MatchAccessLevelOfUser(c, organizationID)
+	if err != nil {
+		return
+	}
+
+	err = c.BindJSON(&organization)
+	if err != nil {
+		return
+	}
+	organization.Organization_ID = organizationID
+	err = repository.UpdateOrganization(*organization)
+
+	return organization, err
+}
+
+func DeleteOrganization(c *gin.Context) (err error) {
+	organizationID := c.Param("organization_id")
+	_, err = MatchAccessLevelOfUser(c, organizationID)
+	if err != nil {
+		return
+	}
+	err = repository.DeleteOrganization(organizationID)
+	return
+
+}
+
+func AddToOrganization(c *gin.Context) (err error) {
+
+	organizationID := c.Param("organization_id")
+	_, err = MatchAccessLevelOfUser(c, organizationID)
+	if err != nil {
+		return
+	}
+
+	var member models.Organization_Member
+	err = c.BindJSON(&member)
+	if err != nil {
+		return
+	}
+	_, found, err := ContainsUser(c, organizationID, *member.Email)
+	if err != nil {
+		return
+	}
 	if found {
 		err = errors.New("user is already an organization member")
-		return nil, err
+		return
 	}
-	return organization, nil
-}
-
-func GetOrganization(c *gin.Context, organizationID string) (organization *models.Organization, err error) {
-	//Find organization in database  DONE
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	err = organizationCollection.FindOne(ctx, bson.M{"organization_id": organizationID}).Decode(&organization)
+	user, err := repository.GetUserByEmail(member.Email)
 	if err != nil {
 		return
 	}
-	return
+	member.Name = user.Name
 
-}
-
-type NeededInfo struct {
-	Organization_ID      string
-	Name                 string
-	Description          string
-	Organization_members []models.Organization_Member
-}
-
-func GetAllOrganizations(c *gin.Context) (organizations []NeededInfo, err error) {
-	//Find organization in database  DONE
-
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	cursor, err := organizationCollection.Find(ctx, bson.M{})
-	if err != nil {
-		return
-	}
-
-	if err = cursor.All(ctx, &organizations); err != nil {
-		return
-	}
-
-	// Prints the results of the find operation as structs
-	for _, result := range organizations {
-		cursor.Decode(&result)
-	}
-
-	return
-
-}
-
-func UpdateOrganization(c *gin.Context, organizationID string) (organization *models.Organization, err error) {
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	if err := c.BindJSON(&organization); err != nil {
-		return nil, err
-	}
-
-	var updateObj primitive.D
-
-	updateObj = append(updateObj, bson.E{Key: "name", Value: organization.Name})
-	updateObj = append(updateObj, bson.E{Key: "description", Value: organization.Description})
-
-	filter := bson.M{"organization_id": organizationID}
-
-	_, err = organizationCollection.UpdateOne(
-		ctx,
-		filter,
-		bson.D{
-			{Key: "$set", Value: updateObj},
-		},
-	)
+	err = repository.AddToOrganization(organizationID, member)
 
 	if err != nil {
 		log.Panic(err)
-		return nil, err
 	}
-	return organization, nil
-}
-
-func DeleteOrganization(c *gin.Context, organizationID string) (err error) {
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	filter := bson.M{"organization_id": organizationID}
-	result, err := organizationCollection.DeleteOne(ctx, filter)
-	if err != nil || result.DeletedCount == 0 {
-		return errors.New("organization id doesnt match")
-	}
-	return nil
-
-}
-
-func AddToOrganization(c *gin.Context, organizationID string, members *[]models.Organization_Member) (err error) {
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	var updateObj primitive.D
-
-	updateObj = append(updateObj, bson.E{Key: "organization_members", Value: members})
-
-	filter := bson.M{"organization_id": organizationID}
-
-	_, err = organizationCollection.UpdateOne(
-		ctx,
-		filter,
-		bson.D{
-			{Key: "$set", Value: updateObj},
-		},
-	)
-
-	if err != nil {
-		log.Panic(err)
-		return err
-	}
-	return nil
+	return err
 }

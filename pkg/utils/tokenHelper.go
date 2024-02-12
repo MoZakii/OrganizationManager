@@ -2,7 +2,6 @@ package utils
 
 import (
 	"MoZaki-Organization-Manager/pkg/database/mongodb/repository"
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -11,12 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
-
-var userCollection *mongo.Collection = repository.OpenCollection(repository.Client, "user")
 
 func GenerateAllTokens(email string, name string, uid string) (signedToken string, signedRefreshToken string, err error) {
 
@@ -93,38 +87,21 @@ func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func UpdateAllTokens(signedToken string, signedRefreshToken string, userId string) (string, string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
+func UpdateAllTokens(signedToken string, signedRefreshToken string, userId string) (string, string, error) {
 
-	var err error
-
-	_, err = ValidateToken(signedRefreshToken)
+	_, err := ValidateToken(signedRefreshToken)
 	if err != nil {
 		log.Panic(err)
-		return "", ""
+		return "", "", err
 	}
 
-	var updateObj primitive.D
-
-	updateObj = append(updateObj, bson.E{Key: "token", Value: signedToken})
-	updateObj = append(updateObj, bson.E{Key: "refresh_token", Value: signedRefreshToken})
-
-	filter := bson.M{"user_id": userId}
-
-	_, err = userCollection.UpdateOne(
-		ctx,
-		filter,
-		bson.D{
-			{Key: "$set", Value: updateObj},
-		},
-	)
+	err = repository.UpdateTokens(signedToken, signedRefreshToken, userId)
 
 	if err != nil {
 		log.Panic(err)
-		return "", ""
+		return "", "", err
 	}
 
-	return signedToken, signedRefreshToken
+	return signedToken, signedRefreshToken, nil
 
 }
