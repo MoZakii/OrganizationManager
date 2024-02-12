@@ -3,21 +3,19 @@ package utils
 import (
 	"MoZaki-Organization-Manager/pkg/database/mongodb/repository"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
 // Function that handles Token generation using a secret key
 func GenerateAllTokens(email string, name string, uid string) (signedToken string, signedRefreshToken string, err error) {
 
-	err = godotenv.Load(".env")
+	/*err = godotenv.Load(".env")
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 
 	var SECRET_KEY string = os.Getenv("SECRET_KEY")
 
@@ -53,10 +51,10 @@ func GenerateAllTokens(email string, name string, uid string) (signedToken strin
 // Function that validates token and returns its claims
 func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 
-	err := godotenv.Load(".env")
+	/*err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 
 	var SECRET_KEY string = os.Getenv("SECRET_KEY")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
