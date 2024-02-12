@@ -7,11 +7,7 @@ import (
 )
 
 func AuthRoutes(incomingRoutes *gin.Engine) {
-	auth := incomingRoutes.Group("/")
-	{
-		auth.POST("signup", handlers.Signup())
-		auth.POST("signin", handlers.Login())
-		auth.POST("refresh-token", handlers.RefreshToken())
-	}
-
+	incomingRoutes.POST("/signup", handlers.Signup())
+	incomingRoutes.POST("/signin", handlers.Login())
+	incomingRoutes.POST("/refresh-token", handlers.RefreshToken())
 }

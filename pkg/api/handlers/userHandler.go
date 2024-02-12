@@ -149,3 +149,15 @@ func RefreshToken() gin.HandlerFunc {
 		})
 	}
 }
+
+func GetUserByEmail(c *gin.Context, email *string) (foundUser models.User, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+
+	err = userCollection.FindOne(ctx, bson.M{"email": *email}).Decode(&foundUser)
+	if err != nil {
+		return
+	}
+
+	return
+}
