@@ -13,6 +13,7 @@ import (
 
 var organizationCollection *mongo.Collection = OpenCollection(Client, "organization")
 
+// Function that creates organization in the database
 func CreateOrganization(organization models.Organization) (err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
@@ -20,6 +21,8 @@ func CreateOrganization(organization models.Organization) (err error) {
 	_, err = organizationCollection.InsertOne(ctx, organization)
 	return
 }
+
+// Function that returns an organization from the database
 
 func GetOrganization(organizationID string) (organization *models.Organization, err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -38,6 +41,8 @@ type NeededInfo struct {
 	Description         string
 	OrganizationMembers []models.Organization_Member
 }
+
+// Function that returns all organizations from the database
 
 func GetAllOrganizations() (organizations []NeededInfo, err error) {
 
@@ -72,6 +77,8 @@ func GetAllOrganizations() (organizations []NeededInfo, err error) {
 	return
 }
 
+// Function that updates an organization's data in the database
+
 func UpdateOrganization(organization models.Organization) (err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
@@ -86,11 +93,11 @@ func UpdateOrganization(organization models.Organization) (err error) {
 	}
 
 	_, err = organizationCollection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		log.Panic(err)
-	}
+
 	return
 }
+
+// Function that deletes an organization in the database
 
 func DeleteOrganization(organizationID string) (err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -103,6 +110,8 @@ func DeleteOrganization(organizationID string) (err error) {
 	}
 	return
 }
+
+// Function that adds a member to an organization data in the database
 
 func AddToOrganization(organizationID string, member models.Organization_Member) error {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -125,6 +134,7 @@ func AddToOrganization(organizationID string, member models.Organization_Member)
 	return nil
 }
 
+// Function that returns an organization object from the database using its ID
 func GetOrganizationByID(organizationID string) (organization *models.Organization, err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()

@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Function that handles Create Organization Route
 func CreateOrganization() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var organization models.Organization
@@ -29,6 +30,7 @@ func CreateOrganization() gin.HandlerFunc {
 	}
 }
 
+// Function that handles read organization route
 func ReadOrganization() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -44,6 +46,7 @@ func ReadOrganization() gin.HandlerFunc {
 	}
 }
 
+// Function that handles read all organizations route
 func ReadAllOrganizations() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		organizations, err := controllers.GetAllOrganizations(c)
@@ -55,6 +58,7 @@ func ReadAllOrganizations() gin.HandlerFunc {
 	}
 }
 
+// Function that handles update organization route
 func UpdateOrganization() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		organization, err := controllers.UpdateOrganization(c)
@@ -70,6 +74,7 @@ func UpdateOrganization() gin.HandlerFunc {
 	}
 }
 
+// Function that handles delete organization route
 func DeleteOrganization() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -83,6 +88,7 @@ func DeleteOrganization() gin.HandlerFunc {
 	}
 }
 
+// Function that handles inviting users to organization route
 func InviteUserToOrganization() gin.HandlerFunc {
 	return func(c *gin.Context) {
 

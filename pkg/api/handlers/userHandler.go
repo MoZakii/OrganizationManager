@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Function that handles sign up route
 func Signup() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -22,6 +23,7 @@ func Signup() gin.HandlerFunc {
 	}
 }
 
+// Function that handles login route
 func Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -38,6 +40,7 @@ func Login() gin.HandlerFunc {
 	}
 }
 
+// Function that handles refresh token route
 func RefreshToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 

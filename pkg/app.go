@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Function that handles the initialization of the project
 func Run() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -24,14 +25,6 @@ func Run() {
 
 	routes.OrganizationRoutes(router)
 	routes.AuthRoutes(router)
-
-	router.GET("/api-1", func(c *gin.Context) {
-		c.JSON(200, gin.H{"success": "Access granted for api-1"})
-	})
-
-	router.GET("/api-2", func(c *gin.Context) {
-		c.JSON(200, gin.H{"success": "Access granted for api-2"})
-	})
 
 	router.Run(":" + port)
 }

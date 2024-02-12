@@ -5,13 +5,12 @@ import (
 	"MoZaki-Organization-Manager/pkg/database/mongodb/repository"
 	"MoZaki-Organization-Manager/pkg/utils"
 	"errors"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
 )
 
+// Function that extracts user data and validates it then creates a user with it if valid.
 func SignUp(c *gin.Context) (err error) {
 	var user models.User
 
@@ -25,7 +24,7 @@ func SignUp(c *gin.Context) (err error) {
 		return
 	}
 
-	count, err := repository.CountUsersByEmail(user.Email)
+	count, err := repository.CountUsersByEmail(user.Email) // Check if user email already exists
 	if err != nil {
 		err = errors.New("error occured while checking the email")
 		return
@@ -36,7 +35,7 @@ func SignUp(c *gin.Context) (err error) {
 		return
 	}
 
-	password := HashPassword(*user.Password)
+	password := utils.HashPassword(*user.Password) // Hash password for the user
 	user.Password = &password
 	user.ID = primitive.NewObjectID()
 	user.User_id = user.ID.Hex()
@@ -66,7 +65,7 @@ func Login(c *gin.Context) (token string, refreshToken string, err error) {
 	if err != nil {
 		return
 	}
-	passwordIsValid, msg := VerifyPassword(*user.Password, *foundUser.Password)
+	passwordIsValid, msg := utils.VerifyPassword(*user.Password, *foundUser.Password)
 
 	if !passwordIsValid {
 		err = errors.New(msg)
@@ -112,26 +111,4 @@ func Refresh_Token(c *gin.Context) (token string, refreshToken string, err error
 
 	return
 
-}
-
-// Function that hashes passwords for users
-func HashPassword(password string) string {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(bytes)
-}
-
-// Function that compares both provided password and saved password to verify the user
-func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
-	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
-	check := true
-	msg := ""
-
-	if err != nil {
-		msg = "Email or password is incorrect"
-		check = false
-	}
-	return check, msg
 }

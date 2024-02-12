@@ -4,7 +4,6 @@ import (
 	"MoZaki-Organization-Manager/pkg/database/mongodb/models"
 	"MoZaki-Organization-Manager/pkg/database/mongodb/repository"
 	"errors"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -13,6 +12,7 @@ import (
 
 var Validate = validator.New()
 
+// Function that checks if the User has owner level access on organization
 func MatchAccessLevelOfUser(c *gin.Context, organizationID string) (organization *models.Organization, err error) {
 	//Find organization in database
 
@@ -39,6 +39,7 @@ func MatchAccessLevelOfUser(c *gin.Context, organizationID string) (organization
 	return organization, nil
 }
 
+// Function that checks whether user is present in the organization members
 func ContainsUser(c *gin.Context, organizationID string, userEmail string) (organization *models.Organization, found bool, err error) {
 
 	found = false
@@ -60,6 +61,7 @@ func ContainsUser(c *gin.Context, organizationID string, userEmail string) (orga
 	return organization, found, err
 }
 
+// Function that extracts organization data from context and creates an organization with given data
 func CreateOrganization(c *gin.Context, organization *models.Organization) (err error) {
 
 	temp, exists := c.Get("user_email")
@@ -79,14 +81,15 @@ func CreateOrganization(c *gin.Context, organization *models.Organization) (err 
 	return
 }
 
+// Function that returns organization data given the id
 func GetOrganization(c *gin.Context) (organization *models.Organization, err error) {
 	organizationID := c.Param("organization_id")
 	organization, err = repository.GetOrganization(organizationID)
 
 	return
-
 }
 
+// Function that returns all organizations' data
 func GetAllOrganizations(c *gin.Context) (organizations []repository.NeededInfo, err error) {
 
 	organizations, err = repository.GetAllOrganizations()
@@ -95,6 +98,7 @@ func GetAllOrganizations(c *gin.Context) (organizations []repository.NeededInfo,
 
 }
 
+// Function that updates organization data after extracting them from context
 func UpdateOrganization(c *gin.Context) (organization *models.Organization, err error) {
 
 	organizationID := c.Param("organization_id")
@@ -113,6 +117,7 @@ func UpdateOrganization(c *gin.Context) (organization *models.Organization, err 
 	return organization, err
 }
 
+// Function that deletes an organization given an id
 func DeleteOrganization(c *gin.Context) (err error) {
 	organizationID := c.Param("organization_id")
 	_, err = MatchAccessLevelOfUser(c, organizationID)
@@ -124,10 +129,11 @@ func DeleteOrganization(c *gin.Context) (err error) {
 
 }
 
+// Function that adds a user to the members of a given organization
 func AddToOrganization(c *gin.Context) (err error) {
 
 	organizationID := c.Param("organization_id")
-	_, err = MatchAccessLevelOfUser(c, organizationID)
+	_, err = MatchAccessLevelOfUser(c, organizationID) // Check if user is allowed to invite
 	if err != nil {
 		return
 	}
@@ -137,7 +143,7 @@ func AddToOrganization(c *gin.Context) (err error) {
 	if err != nil {
 		return
 	}
-	_, found, err := ContainsUser(c, organizationID, *member.Email)
+	_, found, err := ContainsUser(c, organizationID, *member.Email) // Check if organization contains the invited user
 	if err != nil {
 		return
 	}
@@ -145,16 +151,13 @@ func AddToOrganization(c *gin.Context) (err error) {
 		err = errors.New("user is already an organization member")
 		return
 	}
-	user, err := repository.GetUserByEmail(member.Email)
+	user, err := repository.GetUserByEmail(member.Email) //Fetch invited user data
 	if err != nil {
 		return
 	}
 	member.Name = user.Name
 
-	err = repository.AddToOrganization(organizationID, member)
+	err = repository.AddToOrganization(organizationID, member) // Add user to the organization
 
-	if err != nil {
-		log.Panic(err)
-	}
 	return err
 }

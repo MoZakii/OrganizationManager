@@ -3,7 +3,6 @@ package repository
 import (
 	"MoZaki-Organization-Manager/pkg/database/mongodb/models"
 	"context"
-	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,6 +11,7 @@ import (
 
 var userCollection *mongo.Collection = OpenCollection(Client, "user")
 
+// Function that updates user's tokens in the database
 func UpdateTokens(signedToken string, signedRefreshToken string, userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
@@ -28,13 +28,13 @@ func UpdateTokens(signedToken string, signedRefreshToken string, userId string) 
 	_, err := userCollection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
-		log.Panic(err)
 		return err
 	}
 
 	return err
 }
 
+// Function that creates a user in the database
 func CreateUser(user models.User) (err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
@@ -42,6 +42,7 @@ func CreateUser(user models.User) (err error) {
 	return
 }
 
+// Function that returns the count of users with a given email from the database
 func CountUsersByEmail(email *string) (count int64, err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
@@ -50,6 +51,7 @@ func CountUsersByEmail(email *string) (count int64, err error) {
 	return
 }
 
+// Function that returns a user object from the database using their email
 func GetUserByEmail(email *string) (foundUser models.User, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
