@@ -1,6 +1,6 @@
 # Golang API Application
 
-This repository houses a Golang-based API application designed for managing organizations. The application includes features such as token management, CRUD operations for organizations, user invitations, and integration with MongoDB using Docker.
+This repository houses a Golang-based API application designed for managing organizations. The application includes features such as token management, CRUD operations for organizations, user invitations, and integration with MongoDB using Docker. To run use docker-compose up command in the terminal with the project's path.
 
 ## Project Structure
 
@@ -36,7 +36,3 @@ The project structure is designed to assist you in getting started quickly. You 
   - **unit/**: Unit tests.
 
 - **.gitignore**: Specifies files and directories to be ignored by Git.
-
-## Getting Started
-
-To begin working with the application, follow the instructions in the project documentation. Feel free to adjust the project structure as needed based on your preferences and evolving project requirements.
